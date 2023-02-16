@@ -5,6 +5,22 @@ import { Agenda } from "../agenda";
 
 const debug = createDebugger("agenda:internal:processJobs");
 
+export const callProcessJobs = async function(
+  this: Agenda,
+  extraJob: Job
+) {
+  // Check if another copy of this processJobs function has not completed yet, and setInterval has called processJobs again
+  if (this._processJobsRunning === true) {
+    debug("Another instance of processJobs is already running, exiting this instance")
+    return;
+  }
+  this._processJobsRunning = true;
+
+  processJobs.bind(this, extraJob);
+
+  this._processJobsRunning = false;
+}
+
 /**
  * Process methods for jobs
  * @param {Job} extraJob job to run immediately
@@ -18,6 +34,7 @@ export const processJobs = async function (
     extraJob?.attrs?.name ?? "unknownName",
     extraJob?.attrs?._id ?? "unknownId"
   );
+
   // Make sure an interval has actually been set
   // Prevents race condition with 'Agenda.stop' and already scheduled run
   if (!this._processInterval) {

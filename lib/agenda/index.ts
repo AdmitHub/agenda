@@ -101,6 +101,7 @@ class Agenda extends EventEmitter {
   _collection!: Collection;
   _nextScanAt: any;
   _processInterval: any;
+  _processJobsRunning: boolean | undefined
 
   cancel!: typeof cancel;
   close!: typeof close;

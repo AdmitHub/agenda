@@ -1,6 +1,6 @@
 import createDebugger from "debug";
 import { Agenda } from ".";
-import { processJobs } from "../utils";
+import { callProcessJobs } from "../utils";
 
 const debug = createDebugger("agenda:start");
 
@@ -23,8 +23,8 @@ export const start = async function (this: Agenda): Promise<void | unknown> {
     this._processEvery
   );
   this._processInterval = setInterval(
-    processJobs.bind(this),
+    callProcessJobs.bind(this),
     this._processEvery
   );
-  process.nextTick(processJobs.bind(this));
+  process.nextTick(callProcessJobs.bind(this));
 };
