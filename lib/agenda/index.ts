@@ -100,7 +100,7 @@ class Agenda extends EventEmitter {
   _mdb!: MongoDb;
   _collection!: Collection;
   _nextScanAt: any;
-  _processTimer: any;
+  _processInterval: any;
 
   cancel!: typeof cancel;
   close!: typeof close;
