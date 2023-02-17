@@ -6,6 +6,38 @@ import { Agenda } from "../agenda";
 const debug = createDebugger("agenda:internal:processJobs");
 
 /**
+ * Timer to run process methods for jobs
+ *
+ * Use this rather than setInterval to ensure that at most one processJobs is running at a time.
+ */
+
+export const processJobsOnTimer = async function (
+  this: Agenda,
+): any {
+  // NOTE: There is the potential for a bit of drift if this job runs late.
+  // But it's internal to the process, so likely it's reasonable.  We could
+  // store a time on `this` and add 5 seconds every time, but this is simpler
+  // and less invasive.
+  // TODO: Is this right in typescript?
+  const lastRun = new Date();
+
+  // Actually check for jobs to run
+  processJobs().bind(this)
+
+  // Compute the remaining time for the next run, subtracting out the time that passed since we started.
+  // Unless we already missed it; then schedule it right now.
+  const delayToNextRun = this._processEvery - ((new Date()) - lastRun);
+  if (delayToNextRun < 0)
+    delayToNextRun = 0;
+
+  // And schedule ourselves to run again at the appropriate time.
+  this._processTimer = setTimer(
+    processJobsOnTimer.bind(this),
+    this._processEvery
+  );
+}
+
+/**
  * Process methods for jobs
  * @param {Job} extraJob job to run immediately
  */
@@ -20,8 +52,8 @@ export const processJobs = async function (
   );
   // Make sure an interval has actually been set
   // Prevents race condition with 'Agenda.stop' and already scheduled run
-  if (!this._processInterval) {
-    debug("no _processInterval set when calling processJobs, returning");
+  if (!this._processTimer) {
+    debug("no _processTimer set when calling processJobs, returning");
     return;
   }
 
@@ -283,7 +315,7 @@ export const processJobs = async function (
      * @returns {undefined}
      */
     function runOrRetry() {
-      if (self._processInterval) {
+      if (self._processTimer) {
         // @todo: We should check if job exists
         const job = jobQueue.pop()!;
         const jobDefinition = definitions[job.attrs.name];

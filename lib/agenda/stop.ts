@@ -43,7 +43,7 @@ export const stop = async function (this: Agenda): Promise<void> {
   };
 
   debug("Agenda.stop called, clearing interval for processJobs()");
-  clearInterval(this._processInterval);
-  this._processInterval = undefined;
+  clearTimeout(this._processTimeout);
+  this._processTimeout = undefined;
   return _unlockJobs();
 };
